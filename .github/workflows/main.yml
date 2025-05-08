@@ -7,40 +7,51 @@ jobs:
   build:
     name: Start Building...
     runs-on: windows-latest
-    timeout-minutes: 360  # Set to 6 hours (360 minutes)
+    timeout-minutes: 360  # 6 hours
 
     steps:
-      - name: Downloading & Installing Essentials
+      - name: Download Essentials from Dropbox
+        shell: powershell
         run: |
-          Invoke-WebRequest -Uri "https://www.dropbox.com/scl/fi/qdyd4p9t6xoabl95n5o3g/Downloads.bat?rlkey=snr74vv1vr8k5suujugvrhjtm&dl=1" -OutFile "Downloads.bat"
-          cmd /c Downloads.bat
+          $url = "https://www.dropbox.com/scl/fi/qdyd4p9t6xoabl95n5o3g/Downloads.bat?rlkey=snr74vv1vr8k5suujugvrhjtm&dl=1"
+          $output = "Downloads.bat"
+          Invoke-WebRequest -Uri $url -OutFile $output
+          if (!(Test-Path $output)) {
+            Write-Error "Downloads.bat not downloaded!"
+            exit 1
+          } else {
+            Write-Host "Downloaded Downloads.bat successfully."
+          }
 
-      - name: Log In To AnyDesk
-        run: cmd /c show.bat
-
-      - name: Time Counter
+      - name: Run Downloads.bat
+        shell: cmd
         run: |
-          # Simple PowerShell timer for 6 hours (21600 seconds)
+          if exist Downloads.bat (
+            call Downloads.bat
+          ) else (
+            echo Downloads.bat is missing!
+            exit /b 1
+          )
+
+      - name: Run show.bat (AnyDesk Login)
+        shell: cmd
+        run: |
+          if exist show.bat (
+            call show.bat
+          ) else (
+            echo show.bat not found!
+            exit /b 1
+          )
+
+      - name: Timer & Keep-Alive (6 hours)
+        shell: powershell
+        run: |
           $startTime = Get-Date
-          $endTime = $startTime.AddSeconds(21600)
+          $endTime = $startTime.AddHours(6)
           Write-Host "Timer started at $startTime"
           while ((Get-Date) -lt $endTime) {
             $elapsed = (Get-Date) - $startTime
-            Write-Host "Elapsed time: $($elapsed.Hours)h $($elapsed.Minutes)m $($elapsed.Seconds)s"
-            Start-Sleep -Seconds 60  # Update every minute
+            Write-Host "Elapsed time: $($elapsed.Hours)h $($elapsed.Minutes)m $($elapsed.Seconds)s - Still running..."
+            Start-Sleep -Seconds 300  # Sleep 5 minutes
           }
-          Write-Host "Timer completed after 6 hours at $(Get-Date)"
-
-      - name: Keep Alive
-        run: |
-          # Set duration to 6 hours (21600 seconds)
-          $duration = 21600
-          $interval = 300  # Check every 5 minutes (300 seconds)
-          $endTime = (Get-Date).AddSeconds($duration)
-
-          Write-Host "Starting keep-alive loop for 6 hours..."
-          while ((Get-Date) -lt $endTime) {
-            Write-Host "Workflow is still alive at $(Get-Date)"
-            Start-Sleep -Seconds $interval
-          }
-          Write-Host "Keep-alive completed after 6 hours."
+          Write-Host "Timer completed at $(Get-Date)"
