@@ -10,6 +10,7 @@ jobs:
     timeout-minutes: 360  # 6 hours
 
     steps:
+      # تحميل Essentials من Dropbox
       - name: Download Essentials from Dropbox
         shell: powershell
         run: |
@@ -23,6 +24,7 @@ jobs:
             Write-Host "Downloaded Downloads.bat successfully."
           }
 
+      # تشغيل Downloads.bat
       - name: Run Downloads.bat
         shell: cmd
         run: |
@@ -33,6 +35,7 @@ jobs:
             exit /b 1
           )
 
+      # تشغيل show.bat (AnyDesk Login)
       - name: Run show.bat (AnyDesk Login)
         shell: cmd
         run: |
@@ -43,6 +46,14 @@ jobs:
             exit /b 1
           )
 
+      # حفظ الحالة (أو بيانات العملية) في Artifact
+      - name: Save state (Artifact)
+        uses: actions/upload-artifact@v3
+        with:
+          name: workflow-state
+          path: ./state  # حفظ الملفات أو البيانات المهمة هنا
+
+      # Timer & Keep-Alive (6 ساعات)
       - name: Timer & Keep-Alive (6 hours)
         shell: powershell
         run: |
@@ -55,3 +66,33 @@ jobs:
             Start-Sleep -Seconds 300  # Sleep 5 minutes
           }
           Write-Host "Timer completed at $(Get-Date)"
+
+  # خطوة جديدة لاستئناف العمل عند إعادة تشغيل الـ workflow
+  resume:
+    name: Resume Work from Saved State
+    runs-on: windows-latest
+    needs: build  # هذا يضمن أن هذه الخطوة تأتي بعد خطوة البناء
+
+    steps:
+      # تنزيل Artifact لاستئناف العمل
+      - name: Download state (Artifact) to resume work
+        uses: actions/download-artifact@v3
+        with:
+          name: workflow-state
+          path: ./state  # تنزيل ملفات الحالة التي تم حفظها سابقًا
+
+      # استئناف العمل باستخدام البيانات المحفوظة
+      - name: Continue work from saved state
+        shell: powershell
+        run: |
+          Write-Host "Resuming work from saved state..."
+          # يمكنك استئناف المهام بناءً على البيانات المحفوظة في الـ Artifact
+          # على سبيل المثال، يمكن استخدام الملفات المحفوظة لاستكمال العمليات أو استئناف التحميل
+          # أكمل تنفيذ العمليات هنا باستخدام الملفات المحفوظة
+          
+      # إكمال العملية بعد استئناف العمل
+      - name: Continue process after resuming
+        shell: cmd
+        run: |
+          echo "Process completed after resuming"
+          # أضف هنا بقية العمليات التي تحتاج إلى استئنافها بعد تحميل البيانات
