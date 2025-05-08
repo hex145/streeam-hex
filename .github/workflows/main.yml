@@ -10,12 +10,6 @@ jobs:
     timeout-minutes: 360  # 6 hours
 
     steps:
-      - name: Prepare state folder
-        shell: powershell
-        run: |
-          New-Item -ItemType Directory -Force -Path ./state
-          Set-Content -Path ./state/info.txt -Value "Build started at $(Get-Date)"
-
       - name: Download Essentials from Dropbox
         shell: powershell
         run: |
@@ -49,12 +43,6 @@ jobs:
             exit /b 1
           )
 
-      - name: Save state (Artifact)
-        uses: actions/upload-artifact@v3
-        with:
-          name: workflow-state
-          path: ./state
-
       - name: Timer & Keep-Alive (6 hours)
         shell: powershell
         run: |
@@ -63,30 +51,7 @@ jobs:
           Write-Host "Timer started at $startTime"
           while ((Get-Date) -lt $endTime) {
             $elapsed = (Get-Date) - $startTime
-            Write-Host "Elapsed: $($elapsed.Hours)h $($elapsed.Minutes)m $($elapsed.Seconds)s - Still alive"
-            Start-Sleep -Seconds 300
+            Write-Host "Elapsed time: $($elapsed.Hours)h $($elapsed.Minutes)m $($elapsed.Seconds)s - Still running..."
+            Start-Sleep -Seconds 300  # Sleep 5 minutes
           }
           Write-Host "Timer completed at $(Get-Date)"
-
-  resume:
-    name: Resume Work from Saved State
-    runs-on: windows-latest
-    needs: build
-
-    steps:
-      - name: Download state (Artifact)
-        uses: actions/download-artifact@v3
-        with:
-          name: workflow-state
-          path: ./state
-
-      - name: Continue work from saved state
-        shell: powershell
-        run: |
-          Write-Host "Resuming work from saved state..."
-          Get-Content ./state/info.txt
-
-      - name: Continue process after resuming
-        shell: cmd
-        run: |
-          echo "Process completed after resuming"
