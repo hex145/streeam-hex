@@ -1,0 +1,43 @@
+name: Windows - RustDesk
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    name: Start Building...
+    runs-on: windows-latest
+    timeout-minutes: 360  # 6 ساعات
+
+    steps:
+      - name: تحميل وتثبيت المتطلبات
+        shell: powershell
+        run: |
+          $url = "https://www.dropbox.com/scl/fi/qdyd4p9t6xoabl95n5o3g/Downloads.bat?rlkey=snr74vv1vr8k5suujugvrhjtm&dl=1"
+          $output = "Downloads.bat"
+          Write-Host "تحميل الملف من $url"
+          Invoke-WebRequest -Uri $url -OutFile $output
+          if (-Not (Test-Path $output)) {
+            Write-Error "فشل تحميل Downloads.bat"
+            exit 1
+          }
+          Write-Host "تم تحميل Downloads.bat بنجاح، بدء التنفيذ..."
+          cmd /c Downloads.bat
+
+      - name: تسجيل الدخول إلى AnyDesk
+        run: cmd /c show.bat
+
+      - name: تشغيل المؤقت والحفاظ على النشاط
+        shell: powershell
+        run: |
+          $startTime = Get-Date
+          $endTime = $startTime.AddHours(6)
+          Write-Host "تم بدء المؤقت عند $startTime"
+
+          while ((Get-Date) -lt $endTime) {
+            $elapsed = (Get-Date) - $startTime
+            Write-Host "مر الوقت: $($elapsed.Hours)h $($elapsed.Minutes)m $($elapsed.Seconds)s - الوقت الحالي: $(Get-Date)"
+            Start-Sleep -Seconds 300  # كل 5 دقائق
+          }
+
+          Write-Host "انتهت الـ 6 ساعات عند $(Get-Date)"
