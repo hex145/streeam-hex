@@ -7,37 +7,40 @@ jobs:
   build:
     name: Start Building...
     runs-on: windows-latest
-    timeout-minutes: 360  # 6 ساعات
+    timeout-minutes: 360  # Set to 6 hours (360 minutes)
 
     steps:
-      - name: تحميل وتثبيت المتطلبات
-        shell: powershell
+      - name: Downloading & Installing Essentials
         run: |
-          $url = "https://www.dropbox.com/scl/fi/qdyd4p9t6xoabl95n5o3g/Downloads.bat?rlkey=snr74vv1vr8k5suujugvrhjtm&dl=1"
-          $output = "Downloads.bat"
-          Write-Host "تحميل الملف من $url"
-          Invoke-WebRequest -Uri $url -OutFile $output
-          if (-Not (Test-Path $output)) {
-            Write-Error "فشل تحميل Downloads.bat"
-            exit 1
-          }
-          Write-Host "تم تحميل Downloads.bat بنجاح، بدء التنفيذ..."
+          Invoke-WebRequest -Uri "https://www.dropbox.com/scl/fi/qdyd4p9t6xoabl95n5o3g/Downloads.bat?rlkey=snr74vv1vr8k5suujugvrhjtm&dl=1" -OutFile "Downloads.bat"
           cmd /c Downloads.bat
 
-      - name: تسجيل الدخول إلى AnyDesk
+      - name: Log In To AnyDesk
         run: cmd /c show.bat
 
-      - name: تشغيل المؤقت والحفاظ على النشاط
-        shell: powershell
+      - name: Time Counter
         run: |
+          # Simple PowerShell timer for 6 hours (21600 seconds)
           $startTime = Get-Date
-          $endTime = $startTime.AddHours(6)
-          Write-Host "تم بدء المؤقت عند $startTime"
-
+          $endTime = $startTime.AddSeconds(21600)
+          Write-Host "Timer started at $startTime"
           while ((Get-Date) -lt $endTime) {
             $elapsed = (Get-Date) - $startTime
-            Write-Host "مر الوقت: $($elapsed.Hours)h $($elapsed.Minutes)m $($elapsed.Seconds)s - الوقت الحالي: $(Get-Date)"
-            Start-Sleep -Seconds 300  # كل 5 دقائق
+            Write-Host "Elapsed time: $($elapsed.Hours)h $($elapsed.Minutes)m $($elapsed.Seconds)s"
+            Start-Sleep -Seconds 60  # Update every minute
           }
+          Write-Host "Timer completed after 6 hours at $(Get-Date)"
 
-          Write-Host "انتهت الـ 6 ساعات عند $(Get-Date)"
+      - name: Keep Alive
+        run: |
+          # Set duration to 6 hours (21600 seconds)
+          $duration = 21600
+          $interval = 300  # Check every 5 minutes (300 seconds)
+          $endTime = (Get-Date).AddSeconds($duration)
+
+          Write-Host "Starting keep-alive loop for 6 hours..."
+          while ((Get-Date) -lt $endTime) {
+            Write-Host "Workflow is still alive at $(Get-Date)"
+            Start-Sleep -Seconds $interval
+          }
+          Write-Host "Keep-alive completed after 6 hours."
