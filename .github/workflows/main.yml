@@ -10,37 +10,24 @@ jobs:
     timeout-minutes: 360  # 6 hours
 
     steps:
-      - name: Download Essentials from Dropbox
-        shell: powershell
-        run: |
-          $url = "https://www.dropbox.com/scl/fi/qdyd4p9t6xoabl95n5o3g/Downloads.bat?rlkey=snr74vv1vr8k5suujugvrhjtm&dl=1"
-          $output = "Downloads.bat"
-          Invoke-WebRequest -Uri $url -OutFile $output
-          if (!(Test-Path $output)) {
-            Write-Error "Downloads.bat not downloaded!"
-            exit 1
-          } else {
-            Write-Host "Downloaded Downloads.bat successfully."
-          }
-
-      - name: Run Downloads.bat
+      - name: Run Downloads.bat (if exists)
         shell: cmd
         run: |
           if exist Downloads.bat (
+            echo Running Downloads.bat...
             call Downloads.bat
           ) else (
-            echo Downloads.bat is missing!
-            exit /b 1
+            echo Skipping Downloads.bat (file not found)
           )
 
       - name: Run show.bat (AnyDesk Login)
         shell: cmd
         run: |
           if exist show.bat (
+            echo Running show.bat...
             call show.bat
           ) else (
-            echo show.bat not found!
-            exit /b 1
+            echo Skipping show.bat (file not found)
           )
 
       - name: Timer & Keep-Alive (6 hours)
